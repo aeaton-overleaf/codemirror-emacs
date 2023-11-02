@@ -145,15 +145,14 @@ export class EmacsHandler {
     })
   }
   static getKey(e: KeyboardEvent): string[] {
-    var code = e.code;
     var key = e.key;
     if (ignoredKeys[key]) return ['', '', ''];
-    if (code.length > 1) {
-      if (code[0] == "N") code = code.replace(/^Numpad/, "");
-      if (code[0] == "K") code = code.replace(/^Key/, "");
+    if (key.length > 1) {
+      if (key[0] == "N") key = key.replace(/^Numpad/, "");
+      if (key[0] == "K") key = key.replace(/^Key/, "");
     }
-    code = specialKey[code] || code;
-    if (code.length == 1) code = code.toLowerCase();
+    key = specialKey[key] || key;
+    if (key.length == 1) key = key.toLowerCase();
 
     var modifier = '';
     if (e.ctrlKey) { modifier += 'C-'; }
@@ -161,7 +160,7 @@ export class EmacsHandler {
     if (e.altKey) { modifier += 'M-'; }
     if (e.shiftKey) { modifier += 'S-'; }
 
-    return [code, modifier, key];
+    return [key, modifier, key];
   }
 
 
