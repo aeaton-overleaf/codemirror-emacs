@@ -4,6 +4,7 @@ import { showPanel, EditorView, ViewPlugin, PluginValue, ViewUpdate, keymap } fr
 import * as commands from "@codemirror/commands"
 import { startCompletion } from "@codemirror/autocomplete"
 import { openSearchPanel } from "@codemirror/search"
+import { keyName } from "w3c-keyname"
 
 const emacsStyle = EditorView.theme({
   ".cm-emacsMode .cm-cursorLayer:not(.cm-vimCursorLayer)": {
@@ -118,8 +119,9 @@ var specialKey: Record<string, string> = {
   ArrowLeft: 'Left', ArrowRight: 'Right', ArrowUp: 'Up', ArrowDown: 'Down',
   Enter: 'Return', Divide: '/', Slash: '/', Multiply: '*',
   Subtract: '-', Minus: "-", Equal: '=', Semicolon: ';', Comma: ',',
-  Period: '.',
+  Period: '.', ' ': 'Space'
 };
+
 var ignoredKeys: any = { Shift: 1, Alt: 1, Command: 1, Control: 1, CapsLock: 1 };
 
 const commandKeyBinding: Record<string, any> = {}
@@ -145,15 +147,12 @@ export class EmacsHandler {
     })
   }
   static getKey(e: KeyboardEvent): string[] {
-    var code = e.code;
     var key = e.key;
     if (ignoredKeys[key]) return ['', '', ''];
-    if (code.length > 1) {
-      if (code[0] == "N") code = code.replace(/^Numpad/, "");
-      if (code[0] == "K") code = code.replace(/^Key/, "");
-    }
-    code = specialKey[code] || code;
-    if (code.length == 1) code = code.toLowerCase();
+
+    var name = keyName(e);
+    name = specialKey[name] || name;
+    if (name.length == 1) name = name.toLowerCase();
 
     var modifier = '';
     if (e.ctrlKey) { modifier += 'C-'; }
@@ -161,7 +160,7 @@ export class EmacsHandler {
     if (e.altKey) { modifier += 'M-'; }
     if (e.shiftKey) { modifier += 'S-'; }
 
-    return [code, modifier, key];
+    return [name, modifier, key];
   }
 
 
@@ -430,7 +429,7 @@ export const emacsKeys: Record<string, any> = {
   "S-C-Up": commands.selectPageUp,
 
   // TODO use iSearch
-  "C-s": openSearchPanel, // "iSearch", 
+  "C-s": openSearchPanel, // "iSearch",
   "C-r": openSearchPanel, // "iSearchBackwards",
 
   "M-C-s": "findnext",
@@ -469,8 +468,8 @@ export const emacsKeys: Record<string, any> = {
 
   "M-;": commands.toggleComment,
 
-  "C-/|C-x u|S-C--|C-z": commands.undo,
-  "S-C-/|S-C-x u|C--|S-C-z": commands.redo, // infinite undo?
+  "C-/|C-x u|S-C-_|C-z": commands.undo,
+  "S-C-?|S-C-x u|C--|S-C-z": commands.redo, // infinite undo?
   // vertical editing
   "C-x r": "selectRectangularRegion",
   "M-x": { command: "focusCommandLine", args: "M-x " },
