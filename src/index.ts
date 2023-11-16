@@ -126,11 +126,11 @@ var ignoredKeys: any = { Shift: 1, Alt: 1, Command: 1, Control: 1, CapsLock: 1 }
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardLayoutMap
 var layoutMap: Map<string, string> | undefined
 if (navigator.keyboard) {
-  const { getLayoutMap} = navigator.keyboard
+  const keyboard = navigator.keyboard
 
   const update = () => {
-    if (typeof getLayoutMap === 'function') {
-      getLayoutMap().then((result) => {
+    if (typeof keyboard.getLayoutMap === 'function') {
+      keyboard.getLayoutMap().then((result) => {
         layoutMap = result
       }).catch((e: Error) => {
         console.error(e)
@@ -139,8 +139,8 @@ if (navigator.keyboard) {
   }
   update()
 
-  if (typeof navigator.keyboard.addEventListener === 'function') {
-    navigator.keyboard.addEventListener('layoutchange', update)
+  if (typeof keyboard.addEventListener === 'function') {
+    keyboard.addEventListener('layoutchange', update)
   }
 }
 
