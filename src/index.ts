@@ -118,9 +118,31 @@ var specialKey: Record<string, string> = {
   ArrowLeft: 'Left', ArrowRight: 'Right', ArrowUp: 'Up', ArrowDown: 'Down',
   Enter: 'Return', Divide: '/', Slash: '/', Multiply: '*',
   Subtract: '-', Minus: "-", Equal: '=', Semicolon: ';', Comma: ',',
-  Period: '.',
+  Period: '.', ' ': 'Space'
 };
+
 var ignoredKeys: any = { Shift: 1, Alt: 1, Command: 1, Control: 1, CapsLock: 1 };
+
+// https://developer.mozilla.org/en-US/docs/Web/API/KeyboardLayoutMap
+var layoutMap: Map<string, string> | undefined
+if (navigator.keyboard) {
+  const { getLayoutMap} = navigator.keyboard
+
+  const update = () => {
+    if (typeof getLayoutMap === 'function') {
+      getLayoutMap().then((result) => {
+        layoutMap = result
+      }).catch((e: Error) => {
+        console.error(e)
+      })
+    }
+  }
+  update()
+
+  if (typeof navigator.keyboard.addEventListener === 'function') {
+    navigator.keyboard.addEventListener('layoutchange', update)
+  }
+}
 
 const commandKeyBinding: Record<string, any> = {}
 export class EmacsHandler {
@@ -144,16 +166,39 @@ export class EmacsHandler {
       });
     })
   }
-  static getKey(e: KeyboardEvent): string[] {
-    var code = e.code;
-    var key = e.key;
-    if (ignoredKeys[key]) return ['', '', ''];
+  static chooseKeyName(e: KeyboardEvent): string {
+    // use the layout map if available, to get the unmodified key that was pressed
+    // (supports all layouts)
+    // 2023-11-16: supported in Chrome browsers
+    if (layoutMap && layoutMap.has(e.code)) {
+      return layoutMap.get(e.code)!
+    }
+
+    // if neither Alt or Shift are active, we can use the character that was typed
+    // (supports all layouts)
+    // 2023-11-16: supported in all browsers
+    if (!e.altKey && !e.shiftKey) {
+      return e.key
+    }
+
+    // if Alt or Shift are active, we can try to guess which unmodified key was pressed using the keyCode
+    // (only supports en-US layout)
+    // 2023-11-16: non-Chrome browsers with non-en-US layouts may arrive here and get the wrong result
+    var code = e.code
     if (code.length > 1) {
       if (code[0] == "N") code = code.replace(/^Numpad/, "");
       if (code[0] == "K") code = code.replace(/^Key/, "");
+      if (code[0] == "D") code = code.replace(/^Digit/, "");
     }
-    code = specialKey[code] || code;
-    if (code.length == 1) code = code.toLowerCase();
+    return code
+  }
+  static getKey(e: KeyboardEvent): string[] {
+    var key = e.key;
+    if (ignoredKeys[key]) return ['', '', ''];
+
+    var name = EmacsHandler.chooseKeyName(e)
+    name = specialKey[name] || name;
+    if (name.length == 1) name = name.toLowerCase();
 
     var modifier = '';
     if (e.ctrlKey) { modifier += 'C-'; }
@@ -161,7 +206,7 @@ export class EmacsHandler {
     if (e.altKey) { modifier += 'M-'; }
     if (e.shiftKey) { modifier += 'S-'; }
 
-    return [code, modifier, key];
+    return [name, modifier, key];
   }
 
 
