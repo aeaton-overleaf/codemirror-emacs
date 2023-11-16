@@ -435,7 +435,7 @@ export const emacsKeys: Record<string, any> = {
 
   "M-C-s": "findnext",
   "M-C-r": "findprevious",
-  "S-M-5": "replace",
+  "M-S-5": "replace",
 
   // basic editing
   "Backspace": commands.deleteCharBackward,
